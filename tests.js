@@ -500,6 +500,24 @@ when("promise of first promise resolved created", function() {
     });
 });
 
+var originalPromise = Promise;  // In before replace
+
+when("replacing Promise", function() {
+    FakePromise.replacePromise();
+
+    it("replaces global Promise function", function() {
+        Promise.should.equal(FakePromise);
+    });
+
+    when("Promise restored", function() {
+        FakePromise.restorePromise();
+
+        it("restores original Promise function", function() {
+            Promise.should.equal(originalPromise);
+        });
+    });
+});
+
 function assertResolvedWith(sut, resolveValue) {
     assertIsResolved(sut);
 
@@ -569,5 +587,3 @@ function assertIsRejected(promise) {
         promise.isRejected.should.be.true;
     });
 }
-
-FakePromise.clear();

@@ -1,5 +1,6 @@
 (function (global) {
     var asyncQueue = [];
+    var originalPromise = global.Promise;
 
     function FakePromise(resolver) {
         if (typeof resolver != 'function')
@@ -132,6 +133,14 @@
 
     FakePromise.defer = function () {
         return new FakePromise(function () { });
+    };
+
+    FakePromise.replacePromise = function () {
+        global.Promise = FakePromise;
+    };
+
+    FakePromise.restorePromise = function () {
+        global.Promise = originalPromise;
     };
 
     function identity(value) {
