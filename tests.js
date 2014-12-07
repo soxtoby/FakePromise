@@ -558,4 +558,4 @@ function assertIsRejected(promise) {
     });
 }
 
-FakePromise.callbacks.length = 0;
+FakePromise.clear();

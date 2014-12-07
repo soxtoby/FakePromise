@@ -1,4 +1,6 @@
 (function (global) {
+    var asyncQueue = [];
+
     function FakePromise(resolver) {
         if (typeof resolver != 'function')
             throw new TypeError("Promise resolver " + resolver + " is not a function");
@@ -6,7 +8,7 @@
         this.isPending = true;
         this.isResolved = false;
         this.isRejected = false;
-        this.callbacks = [];
+        this._callbacks = [];
 
         try {
             resolver(this.resolve.bind(this), this.reject.bind(this));
@@ -24,11 +26,11 @@
                 var rejectHandler = handler(rejectCallback || identity, reject);
 
                 if (self.isResolved)
-                    FakePromise.callbacks.push(resolveHandler.bind(null, self.value));
+                    asyncQueue.push(resolveHandler.bind(null, self.value));
                 else if (self.isRejected)
-                    FakePromise.callbacks.push(rejectHandler.bind(null, self.error));
+                    asyncQueue.push(rejectHandler.bind(null, self.error));
                 else
-                    self.callbacks.push([resolveHandler, rejectHandler]);
+                    self._callbacks.push([resolveHandler, rejectHandler]);
 
                 function handler(callback, settleSame) {
                     return function (value) {
@@ -43,10 +45,6 @@
                         else
                             settleSame(result);
                     }
-                }
-
-                function identity(value) {
-                    return value;
                 }
             });
         },
@@ -63,10 +61,7 @@
             this.isPending = false;
             this.isResolved = true;
 
-            this.callbacks.forEach(function (callbacks) {
-                this.then.apply(this, callbacks);
-            }.bind(this));
-            this.callbacks.length = 0;
+            evaluateCallbacks(this, this._callbacks);
         },
 
         reject: function (error) {
@@ -77,14 +72,9 @@
             this.isPending = false;
             this.isRejected = true;
 
-            this.callbacks.forEach(function (callbacks) {
-                this.then.apply(this, callbacks);
-            }, this);
-            this.callbacks.length = 0;
+            evaluateCallbacks(this, this._callbacks);
         }
     };
-
-    FakePromise.callbacks = [];
 
     FakePromise.resolve = function (value) {
         try {
@@ -108,14 +98,14 @@
         return new FakePromise(function (resolve, reject) {
             var results = [];
             var resolved = 0;
-            var promiseCount = forEach(promises, waitForPromise);
+            promises.forEach(waitForPromise);
 
             function waitForPromise(promise, i) {
                 FakePromise.resolve(promise).then(
                     function (value) {
                         results[i] = value;
                         resolved++;
-                        if (resolved == promiseCount)
+                        if (resolved == promises.length)
                             resolve(results);
                     },
                     reject
@@ -126,30 +116,31 @@
 
     FakePromise.race = function (promises) {
         return new FakePromise(function (resolve, reject) {
-            forEach(promises, function (p) { FakePromise.resolve(p).then(resolve, reject); });
+            promises.forEach(function (p) { FakePromise.resolve(p).then(resolve, reject); });
         });
     };
 
     FakePromise.flush = function () {
-        var callback;
-        while (callback = this.callbacks.shift())
-            callback();
+        var action;
+        while (action = asyncQueue.shift())
+            action();
+    };
+
+    FakePromise.clear = function () {
+        asyncQueue.length = 0;
     };
 
     FakePromise.defer = function () {
         return new FakePromise(function () { });
     };
 
-    function forEach(iterable, action) {
-        if (Array.isArray(iterable)) {
-            iterable.forEach(action);
-            return iterable.length;
-        } else {
-            var i = 0;
-            for (var item of iterable)
-                action(item, i++);
-            return i;
-        }
+    function identity(value) {
+        return value;
+    }
+
+    function evaluateCallbacks(promise, callbacks) {
+        callbacks.forEach(promise.then.apply.bind(promise.then, promise));
+        callbacks.length = 0;
     }
 
     global.FakePromise = FakePromise;
