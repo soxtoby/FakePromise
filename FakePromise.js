@@ -79,7 +79,7 @@
     FakePromise.resolve = function (value) {
         try {
             return value instanceof FakePromise ? value
-                : typeof value.then == 'function' ? new FakePromise(value.then.bind(value))
+                : value && typeof value.then == 'function' ? new FakePromise(value.then.bind(value))
                 : new FakePromise(function (resolve, reject) {
                 resolve(value);
             });

@@ -355,6 +355,12 @@ when("resolver function throws", function() {
     assertRejectedWith(sut, error);
 });
 
+when("resolved promise created with nothing", function() {
+    var sut = FakePromise.resolve();
+
+    assertResolvedWith(sut, undefined);
+});
+
 when("resolved promise created a value", function() {
     var resolveValue = 'foo';
     var sut = FakePromise.resolve(resolveValue);
@@ -401,7 +407,13 @@ when("resolved promise created with a thenable object", function() {
     });
 });
 
-when("rejected promise created", function() {
+when("rejected promise created with no reason", function() {
+    var sut = FakePromise.reject();
+
+    assertRejectedWith(sut, undefined);
+});
+
+when("rejected promise created with reason", function() {
     var rejectReason = 'foo';
     var sut = FakePromise.reject(rejectReason);
 
@@ -492,7 +504,7 @@ function assertResolvedWith(sut, resolveValue) {
     assertIsResolved(sut);
 
     it("has resolve value", function() {
-        sut.value.should.equal(resolveValue);
+        expect(sut.value).to.equal(resolveValue);
     });
 
     when("resolve callback added & promises flushed", function() {
@@ -510,7 +522,7 @@ function assertRejectedWith(sut, rejectReason) {
     assertIsRejected(sut);
 
     it("has reject reason", function() {
-        sut.error.should.equal(rejectReason);
+        expect(sut.error).to.equal(rejectReason);
     });
 
     when("reject callback added & promises flushed", function() {
