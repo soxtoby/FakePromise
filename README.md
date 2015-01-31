@@ -3,10 +3,10 @@ A fake Promise implementation, for testing purposes.
 
 The main difficulty with testing native promises is that their fulfillment and rejection handlers are called asynchronously, which means your test finishes before all your code has been run. Fake promises solve this by queueing up handlers, so you can decide exactly when they are executed. They also expose their current state, making them easier to assert on.
 
-# Usage
+## Usage
 You can create a ```FakePromise``` directly, or replace native promises by calling ```FakePromise.replacePromise()```. Native promises can be restored with ```FakePromise.restorePromise()```.
 
-# API
+## API
 ```FakePromise``` supports the same API as [native promises](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise), with a few additions. If you've previously called ```FakePromise.replacePromise()```, you can access the static functions through ```Promise``` as well as ```FakePromise```.
 
 ### FakePromise.flush()
