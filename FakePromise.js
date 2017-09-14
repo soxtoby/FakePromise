@@ -23,8 +23,8 @@
             var self = this;
 
             return new FakePromise(function (resolve, reject) {
-                var resolveHandler = handler(resolveCallback || identity, resolve);
-                var rejectHandler = handler(rejectCallback || identity, reject);
+                var resolveHandler = resolveCallback ? handler(resolveCallback) : resolve;
+                var rejectHandler = rejectCallback ? handler(rejectCallback) : reject;
 
                 if (self.isResolved)
                     asyncQueue.push(resolveHandler.bind(null, self.value));
@@ -33,7 +33,7 @@
                 else
                     self._callbacks.push([resolveHandler, rejectHandler]);
 
-                function handler(callback, settleSame) {
+                function handler(callback) {
                     return function (value) {
                         try {
                             var result = callback(value);
@@ -44,7 +44,7 @@
                         if (result && typeof result.then == 'function')
                             result.then(resolve, reject);
                         else
-                            settleSame(result);
+                            resolve(result);
                     }
                 }
             });

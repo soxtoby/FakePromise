@@ -213,8 +213,12 @@ when("promise created with a resolver function", function() {
                     reject('foo');
                     FakePromise.flush();
 
-                    then("second reject callback called with return value of first reject callback", function() {
-                        rejectCallback2.should.have.been.calledWith(rejectCallbackReturnValue);
+                    then("second resolve callback called with return value of first reject callback", function() {
+                        resolveCallback2.should.have.been.calledWith(rejectCallbackReturnValue);
+                    });
+
+                    then("second reject callback isn't called", function () {
+                        rejectCallback2.should.not.have.been.called;
                     });
                 });
             });
@@ -315,6 +319,27 @@ when("promise created with a resolver function", function() {
                     });
                 });
             });
+        });
+    });
+
+    when("resolve callback added", function() {
+        var resolveCallback = sinon.stub();
+        var result = sut.then(resolveCallback);
+
+        when("callbacks added to second promise", function () {
+            var resolveCallback2 = sinon.spy();
+            var rejectCallback2 = sinon.spy();
+            var result2 = result.then(resolveCallback2, rejectCallback2);
+
+            when("original promise rejected", function () {
+                var rejectReason = 'foo';
+                reject(rejectReason);
+                FakePromise.flush();
+
+                then("second reject callback called with reject reason", function () {
+                    rejectCallback2.should.have.been.calledWith();
+                });
+            })
         });
     });
 
